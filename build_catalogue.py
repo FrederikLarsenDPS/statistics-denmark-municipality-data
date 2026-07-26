@@ -95,11 +95,25 @@ input:focus, select:focus { outline: 2px solid currentColor; outline-offset: 1px
   font-size: .75rem;
   font-weight: 650;
 }
-.dataset-row { padding: .9rem .75rem; border-bottom: 1px solid #ddd; }
-.dataset:last-child .dataset-row { border-bottom: 0; }
-.table-line { display: flex; flex-wrap: wrap; align-items: baseline; gap: .25rem .5rem; }
+.dataset { padding: .9rem .75rem; border-bottom: 1px solid #ddd; }
+.dataset[hidden] { display: none; }
+.dataset:last-child { border-bottom: 0; }
+.table-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .25rem .5rem;
+  align-items: baseline;
+  min-width: 0;
+}
 .table-id { font-weight: 700; text-underline-offset: .2em; }
-.table-title { margin: .25rem 0 0; color: #555; line-height: 1.4; }
+.table-title {
+  flex: 0 0 100%;
+  min-width: 0;
+  margin: 0;
+  color: #555;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
 .dimensions { display: flex; flex-direction: column; align-items: flex-start; gap: .3rem; min-width: 0; }
 .dimension {
   max-width: 100%;
@@ -149,29 +163,22 @@ input:focus, select:focus { outline: 2px solid currentColor; outline-offset: 1px
   position: sticky;
   top: 0;
   margin: 0;
-  padding: .75rem;
+  padding: .5rem .6rem;
   background: #fff;
   border-bottom: 1px solid #bbb;
-  font-size: 1rem;
+  font-size: .875rem;
 }
 .value-list {
-  display: grid;
-  grid-template-columns: max-content minmax(0, auto);
   margin: 0;
   padding: 0;
   list-style: none;
 }
 .value-list li {
-  display: grid;
-  grid-template-columns: subgrid;
-  grid-column: 1 / -1;
-  gap: .75rem;
-  padding: .6rem .75rem;
+  padding: .4rem .6rem;
   border-bottom: 1px solid #ddd;
   line-height: 1.35;
 }
 .value-list li:last-child { border-bottom: 0; }
-.value-index { color: #666; font-variant-numeric: tabular-nums; }
 @media (max-width: 700px) {
   .page-header { padding-top: 1.5rem; }
   .catalogue-frame { width: calc(100% + 1rem); }
@@ -228,16 +235,12 @@ def value_popover(
         type="button",
         class_="dimension",
         popovertarget=popover_id,
-        aria_haspopup="dialog",
     )[button_text or f"{label} · {len(values)}"]
-    panel = div(id=popover_id, class_="value-popover", popover=True)[
+    panel = div(id=popover_id, popover=True)[
         h2(class_="popover-title")[f"{label} ({len(values)})"],
         ul(class_="value-list")[(
-            li(data_value_code=str(value.get("id", "")))[
-                span(class_="value-index")[str(index)],
-                span[str(value.get("text", ""))],
-            ]
-            for index, value in enumerate(values, start=1)
+            li[str(value.get("text", ""))]
+            for value in values
         )],
     ]
     return trigger, panel
@@ -288,7 +291,7 @@ def dataset_row(table: dict[str, Any], ids: count) -> Node:
         for dimension in table["municipality_dimensions"]
     )
     return article(
-        class_="dataset",
+        class_="dataset grid",
         data_search=search_text,
         data_status="active" if table["active"] else "inactive",
         data_grain=table["time_grain"],
@@ -297,41 +300,36 @@ def dataset_row(table: dict[str, Any], ids: count) -> Node:
         data_updated=table["updated"],
         data_coverage=str(coverage),
     )[
-        div(class_="dataset-row grid")[
-            div[
-                div(class_="table-line")[
-                    a(
-                        class_="table-id",
-                        href=table["url"],
-                        target="_blank",
-                        rel="noreferrer",
-                    )[table["id"]],
-                    span(class_="meta")[f"· {table['unit']}"],
-                    not table["active"]
-                    and span(class_="meta")["(discontinued)"],
-                ],
-                p(class_="table-title")[table["text"]],
+        div(class_="table-details")[
+            a(
+                class_="table-id",
+                href=table["url"],
+                target="_blank",
+                rel="noreferrer",
+            )[table["id"]],
+            span(class_="meta")[table["unit"]],
+            not table["active"] and span(class_="meta")["(discontinued)"],
+            p(class_="table-title")[table["text"]],
+        ],
+        div(class_="dimensions")[
+            variable_controls or span(class_="empty")["—"]
+        ],
+        div(class_="dimensions")[municipality_controls],
+        div[
+            time_trigger,
+            small(class_="period")[
+                f"{table['first_period']} – {table['latest_period']}"
             ],
-            div(class_="dimensions")[
-                variable_controls or span(class_="empty")["—"]
-            ],
-            div(class_="dimensions")[municipality_controls],
-            div[
-                time_trigger,
-                small(class_="period")[
-                    f"{table['first_period']} – {table['latest_period']}"
-                ],
-            ],
-            time(datetime=table["updated"], class_="updated")[
-                table["updated"].split("T", 1)[0]
-            ],
+        ],
+        time(datetime=table["updated"], class_="updated")[
+            table["updated"].split("T", 1)[0]
         ],
         popovers,
     ]
 
 
 def render_catalogue(data: dict[str, Any]) -> str:
-    tables = data["tables"]
+    tables = sorted(data["tables"], key=lambda table: table["updated"], reverse=True)
     active_count = sum(bool(table["active"]) for table in tables)
     generated = data["generated_at"].split("T", 1)[0]
     grains = sorted({table["time_grain"] for table in tables})
