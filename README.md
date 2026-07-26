@@ -2,6 +2,8 @@
 
 This script scans the official [StatBank API](https://www.dst.dk/en/Statistik/hjaelp-til-statistikbanken/api) catalogue and finds tables where at least one variable contains Danish municipality codes. It inspects metadata only; it does not download the tables' observations.
 
+**[Browse the generated catalogue](https://frederiklarsendps.github.io/statistics-denmark-municipality-data/)**
+
 ## Setup and run
 
 The project uses [uv](https://docs.astral.sh/uv/) with Python 3.10 or newer.
@@ -43,6 +45,8 @@ uv run build_catalogue.py
 ```
 
 This writes `municipality_tables.html` with all table metadata, styles, scripts, and dimension values inline. The interface uses a CSS grid, native HTML popovers, CSS anchor positioning, and a small amount of JavaScript for filtering and sorting. It needs no server or external assets.
+
+GitHub Actions rebuilds and publishes the catalogue to GitHub Pages every Sunday. The workflow can also be run manually from the repository's Actions tab.
 
 ## Test
 
