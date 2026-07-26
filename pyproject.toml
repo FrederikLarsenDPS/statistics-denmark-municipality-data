@@ -1,0 +1,8 @@
+[project]
+name = "statistics-denmark-municipality-data"
+version = "0.1.0"
+description = "Find and browse municipality-level tables from Statistics Denmark"
+requires-python = ">=3.10"
+dependencies = [
+    "htpy>=26.5.1",
+]

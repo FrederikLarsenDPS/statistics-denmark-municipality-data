@@ -1,0 +1,6 @@
+.cache/
+.venv/
+municipality_tables.json
+municipality_tables.csv
+municipality_tables.html
+__pycache__/
